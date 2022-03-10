@@ -1,0 +1,33 @@
+---
+- name: install the epel-release
+  yum:
+    name: "epel-release"
+    state: "present"
+    
+- name: install the patroni packages 
+  yum:
+    name: "{{ patroni_packages }}"
+    state: "present"
+
+- name: Ensure the directory for the patroni config is present in /etc
+  file:
+    path: "{{ patroni_conf_dir }}"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700
+    state: directory
+
+- name: Ensure the directory for the patroni log dir is present in 
+  file:
+    path: "{{ patroni_log_dir }}"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700
+    state: directory
+
+- name: include the patroni deploy tasks
+  include_tasks: deploy_patroni.yml
+
+
+  
+  

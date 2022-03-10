@@ -1,0 +1,122 @@
+{% set etcd_clients = [] %}
+{% for etcd_member in groups['hosts']%}
+{%set etcd_clients = etcd_clients.append(hostvars[etcd_member]['ansible_default_ipv4']['address']+":"+etcd_cluster.client_url_port ) %}
+{% endfor%}
+
+scope: {{patroni_config.scope}}
+namespace: {{patroni_config.namespace}}
+name: {{ansible_hostname}}
+log:
+  dir: {{ patroni_log_dir }}
+restapi:
+  listen: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{patroni_config.rest_api_port}}
+  connect_address: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{patroni_config.rest_api_port}}
+
+etcd3:
+  hosts: {{ etcd_clients|join(',') }}
+
+bootstrap:
+  dcs:
+    ttl: 10
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      use_slots: false
+      parameters:
+        wal_level: 'replica'
+        archive_mode: 'on'
+        unix_socket_directories: '/var/run/postgresql/.'
+{% if patroni_config.use_pgbackrest %}
+        archive_command: 'pgbackrest --stanza={{patroni_config.scope}} archive-push %p'
+{% else %}
+        archive_command: '/bin/true'
+{% endif %}
+        unix_socket_directories: '/var/run/postgresql/.'
+{% for key, value in patroni_config.postgresql.parameters.items() %}
+        {{key}}: "{{value}}"
+{% endfor%}
+{% if patroni_config.use_pgbackrest %}
+      recovery_conf:
+        recovery_target_timeline: latest
+        restore_command: pgbackrest --stanza=test archive-get %f "%p"
+{% endif %}    
+{% if patroni_config.use_pgbackrest %}
+  method: pgbackrest
+  pgbackrest:
+    command: /etc/patroni/boot_pgbackrest.sh
+    keep_existing_recovery_conf: False
+    recovery_conf:
+      recovery_target_timeline: latest
+      restore_command: pgbackrest --stanza={{patroni_config.scope}} archive-get %f "%p"
+{% else %}
+  method: initdb
+  # some desired options for 'initdb'
+  initdb:  # Note: It needs to be a list (some options need values, others are switches)
+  - encoding: UTF8
+  - data-checksums
+{% endif %}
+
+  pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
+  - host replication replicator 0.0.0.0/0 scram-sha-256
+  - host all all 0.0.0.0/0 scram-sha-256
+
+  # Some additional users users which needs to be created after initializing new cluster
+  users:
+
+
+postgresql:
+{% if patroni_config.use_pgbackrest %}
+  create_replica_methods:
+    - pgbackrest
+  pgbackrest:
+    command: pgbackrest --stanza={{patroni_config.scope}} restore --delta --link-all
+    keep_data: True
+    no_params: True
+{% endif %}
+  listen: "*:{{patroni_config.postgresql.port}}"
+  connect_address: {{ansible_hostname}}:{{patroni_config.postgresql.port}}
+  data_dir: {{ pg_home_dir }}/data/postgresql{{ pg_major }}
+  bin_dir: {{ patroni_pg_bin_dir }}
+#  config_dir:
+  pgpass: /tmp/pgpass0
+  pg_hba:
+  - local all all peer
+  - host all all 127.0.0.1/32  scram-sha-256
+  - host all all ::1/128 scram-sha-256
+  - host replication replicator ::1/128 scram-sha-256
+  - host replication replicator 0.0.0.0/0 scram-sha-256
+  - host all all 0.0.0.0/0 scram-sha-256
+  authentication:
+    replication:
+      username: replicator
+      password: {{ postgres_replica_pwd }}
+    superuser:
+      username: postgres
+      password: {{ postgres_su_pwd }}
+    rewind:  # Has no effect on postgres 10 and lower
+      username: rewind_user
+      password: {{ postgres_rewind_pwd }}
+  parameters:
+    wal_level: 'replica'
+    archive_mode: 'on'
+    unix_socket_directories: '/var/run/postgresql/.'
+{% for key, value in patroni_config.postgresql.parameters.items() %}
+    {{key}}: "{{value}}"
+{% endfor%}
+{% if patroni_config.use_pgbackrest %}
+    archive_mode: 'on'
+    archive_command: 'pgbackrest --stanza={{patroni_config.scope}} archive-push %p'
+{% endif %}
+    unix_socket_directories: '/var/run/postgresql/.'
+{% if patroni_config.use_pgbackrest %}
+  recovery_conf:
+    recovery_target_timeline: latest
+    restore_command: /usr/bin/pgbackrest --stanza={{patroni_config.scope}} archive-get %f "%p"
+{% endif %}
+tags:
+    nofailover: false
+    noloadbalance: false
+    clonefrom: false
+    nosync: false

@@ -1,0 +1,66 @@
+---
+- name: Add etcd user
+  user:
+    name: "{{ etcd_user }}"
+    home: "{{ etcd_home }}"
+    shell: /bin/bash
+    system: yes
+    create_home: yes
+    state: present
+    password_lock: yes
+
+- name: Ensure the etcd archive dest exists
+  file:
+    path: "{{ etcd_arch_dest }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure the etcd data directory exists
+  file:
+    path: "{{ etcd_data }}"
+    state: directory
+    owner: "{{etcd_user}}"
+    mode: '0755'
+
+
+- name: Unarchive etcd on the machine
+  unarchive:
+    src: "{{ etcd_package }}"
+    dest: "{{ etcd_arch_dest }}"
+    creates: "{{ etcd_arch_dest }}/etcd-{{ etcd_version }}-{{ etcd_platform }}"
+    remote_src: yes
+
+- name: Ensure the etcd archive and subdirs are owned by root
+  file:
+    path: "{{ etcd_arch_dest }}"
+    recurse: yes
+    owner: root
+    group: root
+
+- name: "Create the symlinks for etcd binaries in {{etcd_bindir}}"
+  file:
+    src: '{{ etcd_arch_dest }}/etcd-{{ etcd_version }}-{{ etcd_platform }}/{{ item }}'
+    dest: '{{etcd_bindir}}/{{ item }}'
+    state: link
+  with_items: "{{ etcd_bin_links }}"
+
+
+- name: Deploy the configuration for etcd
+  template:
+    src: etcd.conf.j2
+    dest: "{{etcd_config_file}}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: Deploy the etcd service file
+  template:
+    src: etcd.service.j2
+    dest: "/etc/systemd/system/etcd.service"
+
+- name: Start service etcd, if not started
+  service:
+    name: etcd
+    enabled: yes
+    daemon_reload: yes
+    state: started

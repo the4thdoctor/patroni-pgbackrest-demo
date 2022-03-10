@@ -1,0 +1,101 @@
+---
+- name: add the gpg key to the rpm repository
+  rpm_key:
+    state: present
+    key: "{{ pg_dnf_gpg_key }}"
+
+- name: install the postgresql rpm pgdg repository
+  dnf:
+    name: "{{ pg_dnf_repo_url }}"
+    state: present
+
+- name: disable the postgresql built in module in dnf
+  command: "dnf -qy module disable postgresql"
+
+- name: install the epel-release
+  yum:
+    name: "epel-release"
+    state: "present"
+
+- name: install the pgbackrest package
+  yum:
+    name: "pgbackrest"
+    state: "present"
+
+- name: "deploy the pgbackrest.conf "
+  template:
+    src: pgbackrest.conf.j2
+    dest: "/etc/pgbackrest.conf"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700
+  no_log: True
+
+- name: Deploy the pgpass file
+  template:
+    src: pgpass.j2
+    dest: "{{ pg_home_dir }}/.pgpass"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0600
+  no_log: True
+
+- name: ensure the .ssh directory is present in the postgres user
+  file:
+    path: "{{pg_home_dir}}/.ssh/"
+    state: directory
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_user }}"
+    mode: "0700"
+
+- name: deploy the private key to the postgres user
+  copy:
+    dest: '{{pg_home_dir}}/.ssh/{{ pgbackrest_ssh_private }}'
+    content: '{{ ssh_priv_key | b64decode }}'
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_user }}"
+    mode: "0600"
+  no_log: True
+
+- name: setup the autorized_keys file on the servers with the public key
+  authorized_key:
+    user: "{{ pg_os_user }}"
+    state: present
+    key: "{{ ssh_pub_key | b64decode }}"
+
+- name: Deploy the ssh configuration
+  template:
+    src: ssh_config.j2
+    dest: '{{pg_home_dir}}/.ssh/config'
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0600
+
+- name: ensure the gcp directory is present and allows access only to the postgres user
+  file:
+    path: "{{gcp_path}}"
+    state: directory
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_user }}"
+    mode: "0700"
+
+- name: deploy the gcp key to the gcp directory
+  copy:
+    dest: '{{gcp_path}}/{{gcp_key}}'
+    content: '{{ gcp_bucket_credentials | b64decode }}'
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_user }}"
+    mode: "0600"
+  no_log: True
+
+- name: ensure the pgbackrest log directory is present in the postgres user home dir
+  file:
+    path: "{{pg_home_dir}}/pgbackrest_log/"
+    state: directory
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_user }}"
+    mode: "0700"
+
+
+
+

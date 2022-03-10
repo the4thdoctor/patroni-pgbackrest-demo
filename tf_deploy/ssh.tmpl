@@ -1,0 +1,10 @@
+%{ for index in number_of_nodes ~}
+Host ${node-name[index]}
+	HostName ${node-ip[index]}
+	User ${ssh_user}
+	ForwardAgent yes
+	Port 22
+    IdentityFile ${ssh_key}
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+%{ endfor ~}

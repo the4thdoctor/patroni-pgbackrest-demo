@@ -1,0 +1,9 @@
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile /dev/null -o IdentityFile ${ssh_key} -o User ${ssh_user}'
+
+[hosts:vars]
+ansible_python_interpreter=/usr/bin/python3
+
+[hosts]
+%{ for index in number_of_nodes ~}
+${node-name[index]}
+%{ endfor ~}

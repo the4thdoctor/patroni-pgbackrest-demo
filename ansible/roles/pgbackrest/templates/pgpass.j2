@@ -1,0 +1,5 @@
+{% for patroni_member in groups['hosts']%}
+{{patroni_member}}:{{patroni_config.postgresql.port}}:*:postgres:{{postgres_su_pwd}}
+{{patroni_member}}:{{patroni_config.postgresql.port}}:*:replicator:{{postgres_replica_pwd}}
+{{patroni_member}}:{{patroni_config.postgresql.port}}:*:rewind_user:{{postgres_rewind_pwd}}
+{% endfor%}

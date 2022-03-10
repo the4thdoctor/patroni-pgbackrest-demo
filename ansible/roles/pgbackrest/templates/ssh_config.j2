@@ -1,0 +1,9 @@
+{% for pgbackrest_member in groups['hosts']%}
+Host {{ pgbackrest_member }} 
+  Hostname {{hostvars[pgbackrest_member]['ansible_default_ipv4']['address']}}
+  Port 22
+  User {{ pg_os_user }}
+  IdentityFile ~/.ssh/{{ pgbackrest_ssh_private }}
+  PreferredAuthentications publickey,password
+  StrictHostKeyChecking accept-new
+{% endfor%}

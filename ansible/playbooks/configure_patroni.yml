@@ -1,0 +1,49 @@
+---
+- name: store the postgresql parameters in a variable
+  set_fact:
+    postgres_params: "{{ patroni_config.postgresql.parameters}}"
+
+- name: get the patroni configuration
+  uri: 
+    url: "http://{{ansible_hostname}}:{{patroni_config.rest_api_port}}/config"
+  register: pat_config
+
+- name: save the existing configuration in a variable
+  set_fact: 
+    old_config: "{{pat_config.json}}"
+  when: pat_config is defined
+
+- name: combine the existing configuration with the cluster parameters
+  set_fact: 
+    new_config: "{{ old_config|combine({'postgresql': {'parameters': postgres_params}}, recursive=True) }}"
+
+- name: add the archive setup if patroni should use pgbackrest
+  set_fact: 
+    new_config: "{{ new_config|combine({'postgresql': {'parameters': pgbackrest_params}}, recursive=True) }}"
+  when: patroni_config.use_pgbackrest|default(False)
+
+
+- name: write the new configuration in patroni
+  uri: 
+    url: "http://{{ansible_hostname}}:{{patroni_config.rest_api_port}}/config"
+    method: PUT
+    body: "{{ new_config|to_json }}"
+    body_format: form-urlencoded
+
+- name: "pause for the loop wait seconds"
+  pause: 
+    seconds: "{{patroni_config.loop_wait}}"
+
+- name: get the patroni status
+  uri: 
+    url: "http://{{ansible_hostname}}:{{patroni_config.rest_api_port}}"
+    status_code: [200, 503]
+  register: pat_status
+
+- name: "restart patroni"
+  command: "/usr/bin/patronictl -k -c /etc/patroni/patroni.yml restart {{patroni_config.scope}} --force"
+  when: pat_status.json.pending_restart is defined
+
+- name: "reload patroni"
+  command: "/usr/bin/patronictl -k -c /etc/patroni/patroni.yml reload {{patroni_config.scope}} --force"
+  when: pat_status.json.pending_restart is not defined

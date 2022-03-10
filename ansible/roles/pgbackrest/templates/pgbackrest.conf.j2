@@ -1,0 +1,26 @@
+[global]
+repo1-type=gcs
+repo1-path=/repo
+repo1-gcs-bucket={{gcp_bucket}}
+repo1-gcs-key={{gcp_path}}/{{gcp_key}}
+repo1-retention-full=1
+log-level-console=info
+log-level-file=info
+backup-standby=y
+
+[{{patroni_config.scope}}]
+pg1-path={{ pg_home_dir }}/data/postgresql{{ pg_major }}
+pg1-port={{patroni_config.postgresql.port}}
+pg1-user=postgres
+{% set count = namespace(value=2) %}
+{% for patroni_member in groups['hosts']%}
+{% if patroni_member != ansible_hostname %}
+
+pg{{count.value}}-path={{ pg_home_dir }}/data/postgresql{{ pg_major }}
+pg{{count.value}}-port={{patroni_config.postgresql.port}}
+pg{{count.value}}-user=postgres
+pg{{count.value}}-host={{patroni_member}}
+{% set count.value = count.value + 1 %}
+{% endif%}
+{% endfor%}
+log-path=/var/log/patroni/

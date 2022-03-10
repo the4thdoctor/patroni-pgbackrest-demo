@@ -1,0 +1,14 @@
+---
+- hosts: "hosts"
+  become: yes
+  roles:
+    - patroni
+
+- hosts: "hosts"
+  become: yes
+  run_once: yes 
+  
+  tasks: 
+  - name: execute the configuration for patroni
+    include_tasks: configure_patroni.yml
+    when: configure_patroni|default(False)

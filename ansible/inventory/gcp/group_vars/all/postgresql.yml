@@ -1,0 +1,11 @@
+pg_dnf_repo_url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+pg_dnf_gpg_key: "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-13"
+pg_home_dir: "/var/lib/pgsql"
+pg_os_user: "postgres"
+pg_os_group: "postgres"
+pg_major: "14"
+pg_minor: ""
+pg_packages:
+  - "postgresql{{pg_major}}{{pg_minor}}"
+  - "postgresql{{pg_major}}-contrib{{pg_minor}}"
+  - "postgresql{{pg_major}}-server{{pg_minor}}"

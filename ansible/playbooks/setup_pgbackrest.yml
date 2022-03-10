@@ -1,0 +1,5 @@
+---
+- hosts: "hosts"
+  become: yes
+  roles:
+    - pgbackrest

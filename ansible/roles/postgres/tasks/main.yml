@@ -1,0 +1,17 @@
+- name: add the gpg key to the rpm repository
+  rpm_key:
+    state: present
+    key: "{{ pg_dnf_gpg_key }}"
+
+- name: install the postgresql rpm pgdg repository
+  dnf:
+    name: "{{ pg_dnf_repo_url }}"
+    state: present
+
+- name: disable the postgresql built in module in dnf
+  command: "dnf -qy module disable postgresql"
+
+- name: install the postgresql packages 
+  dnf:
+    name: "{{ pg_packages }}"
+    state: "present"

@@ -1,0 +1,5 @@
+---
+- hosts: "{{target_env}}"
+  become: yes
+  roles:
+    - hosts

@@ -1,0 +1,17 @@
+{% set etcd_clients = [] %}
+{% for etcd_member in groups['hosts']%}
+{%set etcd_clients = etcd_clients.append(etcd_member+"="+etcd_cluster.protocol+"://"+hostvars[etcd_member]['ansible_default_ipv4']['address']+":"+etcd_cluster.peer_urls_port ) %}
+{% endfor%}
+
+#[Member]
+ETCD_DATA_DIR="{{ etcd_data }}"
+ETCD_LISTEN_PEER_URLS="{{etcd_cluster.protocol}}://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:{{etcd_cluster.peer_urls_port}}"
+ETCD_LISTEN_CLIENT_URLS="{{etcd_cluster.protocol}}://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:{{etcd_cluster.client_url_port}}"
+ETCD_NAME="{{inventory_hostname}}"
+
+
+#[Clustering]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="{{etcd_cluster.protocol}}://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:{{etcd_cluster.peer_urls_port}}"
+ETCD_ADVERTISE_CLIENT_URLS="{{etcd_cluster.protocol}}://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:{{etcd_cluster.client_url_port}}"
+ETCD_INITIAL_CLUSTER="{{ etcd_clients|join(',') }}"
+ETCD_INITIAL_CLUSTER_STATE=new

@@ -1,0 +1,26 @@
+etcd_packages:
+  - "libselinux-python3"
+  - "etcd"
+  - "libselinux-python"
+  - "libsemanage-python"
+  - "curl"
+  - "jq"
+
+etcd_version: "v3.5.2"
+etcd_platform: "linux-amd64"
+etcd_package: "https://github.com/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-{{ etcd_platform }}.tar.gz"
+etcd_arch_dest: "/opt/etcd"
+etcd_user: 'etcd'
+etcd_home: "/var/lib/etcd"
+etcd_data: "{{ etcd_home }}/data"
+etcd_config_file: "/etc/etcd_config.env"
+
+etcd_bindir: "/usr/local/bin"
+etcd_bin_links:
+  - "etcd"
+  - "etcdctl"
+
+etcd_cluster:
+  peer_urls_port: "2380"
+  client_url_port: "2379"
+  protocol: "http"

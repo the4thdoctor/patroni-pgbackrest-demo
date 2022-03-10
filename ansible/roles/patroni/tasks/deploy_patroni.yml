@@ -1,0 +1,40 @@
+---
+- name: Deploy the template for the patroni configuration
+  template:
+    src: patroni.yml.j2
+    dest: "{{ patroni_conf_dir }}/patroni.yml"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700
+  no_log: True
+  
+- name: ensure the postgresql data area is present
+  file:
+    path: "{{ pg_home_dir }}/data/postgresql{{ pg_major }}"
+    state: directory
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700   
+  when: patroni_config.use_pgbackrest
+
+- name: Deploy the pgbackrest bootstrap script
+  template:
+    src: boot_pgbackrest.sh.j2
+    dest: "{{ patroni_conf_dir }}/boot_pgbackrest.sh"
+    owner: "{{ pg_os_user }}"
+    group: "{{ pg_os_group }}"
+    mode: 0700
+  when: patroni_config.use_pgbackrest
+
+- name: Deploy the patroni service
+  template:
+    src: patroni.service.j2
+    dest: "/etc/systemd/system/patroni.service"
+
+- name: enable and start the patroni service
+  systemd:
+    name: "patroni.service"
+    enabled: yes
+    daemon_reload: yes
+    state: started
+  
