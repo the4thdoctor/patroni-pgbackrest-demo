@@ -12,8 +12,7 @@ YELLOW=$(shell tput setaf 3)
 RESET=$(shell tput sgr0)
 extra ?= "-e 'makefile=true' -v"
 ansible_user ?= "ansible"
-vault_temporary_pwd_file ?= ~/.ansible/.patroni_pwd_tmp
-vault_pwd_file ?= ~/.ansible/patroni_pwd
+vault_pwd_file ?= ~/.ansible/patroni_pgbackrest_pwd
 vault_all_file ?= inventory/gcp/group_vars/all/vault.yml
 ifndef vault_id_pwd
 	ifneq ("$(wildcard $(vault_pwd_file))","")

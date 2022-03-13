@@ -1,8 +1,5 @@
 etcd_packages:
-  - "libselinux-python3"
   - "etcd"
-  - "libselinux-python"
-  - "libsemanage-python"
   - "curl"
   - "jq"
 

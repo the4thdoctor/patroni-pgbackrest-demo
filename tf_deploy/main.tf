@@ -123,3 +123,11 @@ resource "local_file" "ansible_inventory" {
   filename = "../ansible/inventory/gcp/hosts"
 }
 
+resource "local_file" "ansible_varariables" {
+  content = templatefile("tf_variables.yml.tmpl",
+    {
+     gcp_bucket = google_storage_bucket.pg_backrest_repo.name
+    }
+  )
+  filename = "../ansible/inventory/gcp/group_vars/all/tf_variables.yml"
+}
