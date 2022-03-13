@@ -15,7 +15,7 @@
     owner: "{{ pg_os_user }}"
     group: "{{ pg_os_group }}"
     mode: 0700   
-  when: patroni_config.use_pgbackrest
+  when: patroni_use_pgbackrest
 
 - name: Deploy the pgbackrest bootstrap script
   template:
@@ -24,7 +24,7 @@
     owner: "{{ pg_os_user }}"
     group: "{{ pg_os_group }}"
     mode: 0700
-  when: patroni_config.use_pgbackrest
+  when: patroni_use_pgbackrest
 
 - name: Deploy the patroni service
   template:

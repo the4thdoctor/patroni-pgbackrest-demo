@@ -9,8 +9,9 @@ patroni_conf_dir: "/etc/patroni"
 patroni_log_dir: "/var/log/patroni"
 patroni_pg_bin_dir: "/usr/pgsql-{{pg_major}}/bin/"
 
+patroni_use_pgbackrest: yes
+
 patroni_config:
-  use_pgbackrest: no
   scope: "flynn"
   namespace: "/the_grid/"
   rest_api_port: "8008"

@@ -42,6 +42,9 @@ terraform.rc
 #ignore vault.yml
 vault.yml
 
+#ignore tf_variables.yml
+tf_variables.yml
+
 #ignore spool files
 *.*~
 

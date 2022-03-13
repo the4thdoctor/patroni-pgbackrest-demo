@@ -36,13 +36,17 @@ apply the configuration with
 
 
 `terraform apply`
+
 # Ansible
+
+**The roles are developed with ansible 5.4.0.**
 
 Create a service account for accessing the GCP bucket and generate a key in json format
 
 Create a pair of ssh keys without passphrase. This key is deployed on the patroni nodes. 
 
 *DON'T USE YOUR PERSONAL SSH KEY*
+
 ## GCP setup 
 
 The make file is expecting the vault's password file in `~/.ansible/patroni_pgbackrest_pwd` .
@@ -59,4 +63,71 @@ Add the following variables:
 * postgres_replica_pwd: Password for the postgresql replicator user
 * postgres_su_pwd:  Password for the postgresql super user
 * postgres_rewind_pwd:  Password for the postgresql rewind user
+
+# Check ansible can ping the hosts
+
+cd into the ansible directory and run 
+
+```
+
+make ping-hosts
+patroni-1 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+patroni-2 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+patroni-0 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+Then run make all and wait for the playbook to complete.
+
+ssh into a patroni node (e.g. patroni-0) and check patroni is correctly deployed.
+
+```
+[ansible@patroni-0 ~]$ sudo -iu postgres
+[postgres@patroni-0 ~]$ patronictl -c /etc/patroni/patroni.yml list
++ Cluster: flynn (7074489069180138726) -----+----+-----------+
+| Member    | Host      | Role    | State   | TL | Lag in MB |
++-----------+-----------+---------+---------+----+-----------+
+| patroni-0 | patroni-0 | Replica | running |  1 |         0 |
+| patroni-1 | patroni-1 | Leader  | running |  1 |           |
+| patroni-2 | patroni-2 | Replica | running |  1 |         0 |
++-----------+-----------+---------+---------+----+-----------+
+ ```
+
+ ## Enable pgbackrest
+ Change the variable `patroni_use_pgbackrest: no` to `patroni_use_pgbackrest: yes `
+
+ Then run make configure-patroni
+
+Create the stanza, run a full backup then check the repo status.
+
+```
+[postgres@patroni-0 ~]$ pgbackrest --stanza=flynn stanza-create
+
+
+[postgres@patroni-0 ~]$ pgbackrest --stanza=flynn --type=full backup
+
+[postgres@patroni-0 ~]$ pgbackrest info
+stanza: flynn
+    status: ok
+    cipher: none
+
+    db (current)
+        wal archive min/max (14): 000000010000000000000005/000000010000000000000005
+
+        full backup: 20220313-075944F
+            timestamp start/stop: 2022-03-13 07:59:44 / 2022-03-13 08:00:33
+            wal start/stop: 000000010000000000000005 / 000000010000000000000005
+            database size: 25.2MB, database backup size: 25.2MB
+            repo1: backup set size: 3.2MB, backup size: 3.2MB
+
+
+```
 

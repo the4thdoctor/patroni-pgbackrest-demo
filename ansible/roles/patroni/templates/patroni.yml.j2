@@ -28,7 +28,7 @@ bootstrap:
         wal_level: 'replica'
         archive_mode: 'on'
         unix_socket_directories: '/var/run/postgresql/.'
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
         archive_command: 'pgbackrest --stanza={{patroni_config.scope}} archive-push %p'
 {% else %}
         archive_command: '/bin/true'
@@ -37,12 +37,12 @@ bootstrap:
 {% for key, value in patroni_config.postgresql.parameters.items() %}
         {{key}}: "{{value}}"
 {% endfor%}
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
       recovery_conf:
         recovery_target_timeline: latest
         restore_command: pgbackrest --stanza=test archive-get %f "%p"
 {% endif %}    
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
   method: pgbackrest
   pgbackrest:
     command: /etc/patroni/boot_pgbackrest.sh
@@ -67,7 +67,7 @@ bootstrap:
 
 
 postgresql:
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
   create_replica_methods:
     - pgbackrest
   pgbackrest:
@@ -105,12 +105,12 @@ postgresql:
 {% for key, value in patroni_config.postgresql.parameters.items() %}
     {{key}}: "{{value}}"
 {% endfor%}
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
     archive_mode: 'on'
     archive_command: 'pgbackrest --stanza={{patroni_config.scope}} archive-push %p'
 {% endif %}
     unix_socket_directories: '/var/run/postgresql/.'
-{% if patroni_config.use_pgbackrest %}
+{% if patroni_use_pgbackrest %}
   recovery_conf:
     recovery_target_timeline: latest
     restore_command: /usr/bin/pgbackrest --stanza={{patroni_config.scope}} archive-get %f "%p"
