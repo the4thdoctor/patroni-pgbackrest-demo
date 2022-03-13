@@ -11,11 +11,22 @@ Create a service account for managing the GCP api with the appropiate privileges
 
 Add to your .bashrc or .bash_profile (depending on whether you usea login session) the following lines:
 
-```export TF_VAR_HOME=${HOME}
+```
+   export TF_VAR_HOME=${HOME}
    export TF_VAR_credential_file=<PATH_TO_THE_GCP_JSON_KEY>
    export TF_VAR_gcp_project=<GCP_PROJECT_NAME>
    export TF_VAR_gcp_bucket=<GCP_BUCKET_NAME>
 ```
+
+e.g.
+
+```
+   export TF_VAR_HOME=${HOME}
+   export TF_VAR_credential_file=~/.gcp/idi-patroni-pgbackrest.json
+   export TF_VAR_gcp_project=idi-patroni-pgbackrest
+   export TF_VAR_gcp_bucket=patroni-pgbackrest-grongo-571
+```
+
 
 initialise terraform with 
 
