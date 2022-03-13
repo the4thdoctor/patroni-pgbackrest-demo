@@ -21,10 +21,7 @@ ifndef vault_id_pwd
 		vault_pwd = "--ask-vault-pass"
 	endif
 endif
-ifdef vault_id_pwd
-$(shell echo "${vault_id_pwd}" > ${vault_temporary_pwd_file})
-	vault_pwd = "--vault-password-file=${vault_temporary_pwd_file}"
-endif
+
 
 
 help:
